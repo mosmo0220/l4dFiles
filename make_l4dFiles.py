@@ -6,6 +6,7 @@ RESULT_FILE = "l4dFiles.hpp"
 
 JSON_H_FILE = 'json.hpp'
 Files = ('l4dConfig.h', 'l4dStorage.h', 'l4dConfig.cpp', 'l4dStorage.cpp')
+INCLUDES = ('#include "l4dConfig.h"', '#include "l4dStorage.h"')
 os.makedirs(RESULT_FOLDER, exist_ok=True)
 
 # Ensure the result folder is empty
@@ -47,6 +48,13 @@ for file_name in Files:
 
 # Remove any includes that are json.hpp
 buffer = buffer.replace('#include "json.hpp"', '')
+
+# Remove any includes that are in the INCLUDES list
+for include in INCLUDES:
+    buffer = buffer.replace(include, '')
+
+# Remove many newlines
+buffer = buffer.replace('\n\n', '\n')
 
 # Add the include for json.hpp at the top of the buffer
 buffer = f'#include "{JSON_H_FILE}"\n\n' + buffer
