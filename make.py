@@ -75,8 +75,14 @@ for include in INCLUDES:
 # Remove many newlines
 buffer = buffer.replace('\n\n', '\n')
 
-# Add the include for json.hpp at the top of the buffer
-buffer = f'#include "{JSON_H_FILE}"\n\n' + buffer
+# Include the json.hpp file content at the bottom of the buffer
+json_h_path = os.path.join(RESULT_FOLDER, JSON_H_FILE)
+if os.path.exists(json_h_path):
+    with open(json_h_path, 'r') as f:
+        json_h_content = f.read()
+    buffer += f"\n// {JSON_H_FILE}\n{json_h_content}\n"
+else:
+    raise FileNotFoundError(f"{JSON_H_FILE} not found in {RESULT_FOLDER}")
 
 # Add the include guard
 include_guard = f"#ifndef L4DFILES_HPP\n#define L4DFILES_HPP\n\n"
