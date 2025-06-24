@@ -1,5 +1,6 @@
 # py generated files
 build/*
+out/*
 
 # Visual Studio Code
 .vscode/

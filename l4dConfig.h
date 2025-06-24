@@ -1,6 +1,3 @@
-#ifndef L4DCONFIG_H
-#define L4DCONFIG_H
-
 #include <string>
 #include <vector>
 #include "json.hpp"
@@ -70,5 +67,3 @@ public:
 	nlohmann::json SettingsToJson(const Settings& settings);
 	Settings JsonToSettings(const nlohmann::json& j);
 };
-
-#endif // L4DCONFIG_H

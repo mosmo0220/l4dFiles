@@ -1,6 +1,3 @@
-#ifndef L4D_STORAGE_H
-#define L4D_STORAGE_H
-
 #include <string>
 #include <vector>
 
@@ -202,5 +199,3 @@ private:
     nlohmann::json FileDataToJson(const FileData& data);
     FileData JsonToFileData(const nlohmann::json& j);
 };
-
-#endif // L4D_STORAGE_H
