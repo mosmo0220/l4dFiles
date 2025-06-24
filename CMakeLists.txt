@@ -1,50 +1,41 @@
 cmake_minimum_required(VERSION 3.10)
-project(L4DCombine LANGUAGES CXX)
+project(L4DHeaderOnly LANGUAGES CXX)
 
-# 1) Twoja biblioteka lub program
-set(SOURCE_FILES
-    l4dConfig.cpp
-    l4dStorage.cpp
-)
-add_library(L4DStatic STATIC ${SOURCE_FILES})
-
-# 2) Lista plików do połączenia
 set(FILES_TO_COMBINE
-    json.hpp
-    l4dConfig.h
-    l4dConfig.cpp
-    l4dStorage.h
-    l4dStorage.cpp
+  l4dConfig.h
+  l4dConfig.cpp
+  l4dStorage.h
+  l4dStorage.cpp
 )
 
-# 3) Ścieżki
-set(OUTPUT_HEADER ${CMAKE_BINARY_DIR}/l4dFiles.hpp)
-set(CONCAT_SCRIPT ${CMAKE_BINARY_DIR}/concat_l4dFiles.cmake)
+set(OUTPUT_DIR    ${CMAKE_BINARY_DIR})
+set(OUTPUT_HEADER ${OUTPUT_DIR}/l4dFiles.hpp)
 
-# 4) Na etapie configure: generujemy mały skrypt CMake, który
-#    w build-time poskłada wszystkie pliki w jeden nagłówek.
-file(WRITE ${CONCAT_SCRIPT}
-"#
-# Ten skrypt wygenerował: ${OUTPUT_HEADER}
-#
-file(WRITE \"${OUTPUT_HEADER}\" \"// === l4dFiles.hpp ===\\n\")
-file(APPEND \"${OUTPUT_HEADER}\" \"// Zawiera: ${FILES_TO_COMBINE}\\n\\n\")
-")
+# 1) skopiuj json.hpp do build/
+file(COPY ${CMAKE_SOURCE_DIR}/json.hpp DESTINATION ${OUTPUT_DIR})
 
+# 2) rozpocznij generację nagłówka
+file(WRITE ${OUTPUT_HEADER} "#pragma once\n\n")
+
+# 3) zbierz wszystkie systemowe include <...>
+set(_angle_includes "")
 foreach(F ${FILES_TO_COMBINE})
-    file(APPEND ${CONCAT_SCRIPT}
-"file(APPEND \"${OUTPUT_HEADER}\" \"// ==== ${F} ====\\n\")
-file(READ \"${CMAKE_SOURCE_DIR}/${F}\" CONTENT)
-file(APPEND \"${OUTPUT_HEADER}\" \"\${CONTENT}\\n\\n\")
-")
+  file(READ "${CMAKE_SOURCE_DIR}/${F}" _raw)
+  string(REGEX MATCHALL "^#include[ \t]*<[^>]+>" _incs "${_raw}")
+  foreach(_i IN LISTS _incs)
+    list(APPEND _angle_includes "${_i}")
+  endforeach()
 endforeach()
+list(REMOVE_DUPLICATES _angle_includes)
+foreach(_i IN LISTS _angle_includes)
+  file(APPEND ${OUTPUT_HEADER} "${_i}\n")
+endforeach()
+file(APPEND ${OUTPUT_HEADER} "\n")
 
-# 5) Target, który uruchomi ten skrypt w build-time
-add_custom_target(combine ALL
-    COMMAND ${CMAKE_COMMAND} -P ${CONCAT_SCRIPT}
-    DEPENDS ${FILES_TO_COMBINE}
-    COMMENT "Generowanie pliku l4dFiles.hpp"
-)
-
-# 6) Upewnij się, że biblioteka buduje się przed combine (opcjonalnie)
-add_dependencies(combine L4DStatic)
+# 4) dopisz zawartość plików bez lokalnych include "..."
+foreach(F ${FILES_TO_COMBINE})
+  file(APPEND ${OUTPUT_HEADER} "// ==== ${F} ====\n")
+  file(READ "${CMAKE_SOURCE_DIR}/${F}" _raw)
+  string(REGEX REPLACE "^#include[ \t]*\"[^\"]+\"[ \t]*\n" "" _content "${_raw}")
+  file(APPEND ${OUTPUT_HEADER} "${_content}\n")
+endforeach()
